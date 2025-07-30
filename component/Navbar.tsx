@@ -1,16 +1,132 @@
 'use client'
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { PublicKey } from '@solana/web3.js';
 import React, { useState, useEffect } from 'react';
 
-const Navbar  = () => {
+// Custom styles for WalletMultiButton to match the page theme
+const walletButtonStyles = `
+  .wallet-adapter-button {
+    background: linear-gradient(135deg, #f97316, #dc2626) !important;
+    border: none !important;
+    border-radius: 0.75rem !important;
+    padding: 0.625rem 1.5rem !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    color: white !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.25) !important;
+    font-family: inherit !important;
+  }
+  
+  .wallet-adapter-button:hover:not([disabled]) {
+    background: linear-gradient(135deg, #ea580c, #b91c1c) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 8px 15px -3px rgba(249, 115, 22, 0.35) !important;
+  }
+  
+  .wallet-adapter-button:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.25) !important;
+  }
+  
+  .wallet-adapter-button[disabled] {
+    background: #374151 !important;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+  }
+  
+  .wallet-adapter-dropdown {
+    background: rgba(17, 24, 39, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(249, 115, 22, 0.2) !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  }
+  
+  .wallet-adapter-dropdown-list {
+    padding: 0.5rem !important;
+  }
+  
+  .wallet-adapter-dropdown-list-item {
+    background: transparent !important;
+    border-radius: 0.5rem !important;
+    margin: 0.125rem 0 !important;
+    padding: 0.75rem 1rem !important;
+    color: #f3f4f6 !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .wallet-adapter-dropdown-list-item:hover {
+    background: rgba(249, 115, 22, 0.1) !important;
+    color: #f97316 !important;
+  }
+  
+  .wallet-adapter-modal {
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+  
+  .wallet-adapter-modal-container {
+    background: linear-gradient(145deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.95)) !important;
+    border: 1px solid rgba(249, 115, 22, 0.2) !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+  }
+  
+  .wallet-adapter-modal-title {
+    color: #f3f4f6 !important;
+    font-weight: 700 !important;
+  }
+  
+  .wallet-adapter-modal-list {
+    padding: 1rem !important;
+  }
+  
+  .wallet-adapter-modal-list-item {
+    background: rgba(31, 41, 55, 0.5) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    border-radius: 0.75rem !important;
+    margin: 0.5rem 0 !important;
+    padding: 1rem !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .wallet-adapter-modal-list-item:hover {
+    background: rgba(249, 115, 22, 0.1) !important;
+    border-color: rgba(249, 115, 22, 0.4) !important;
+    transform: translateY(-1px) !important;
+  }
+  
+  .wallet-adapter-button-end-icon,
+  .wallet-adapter-button-start-icon {
+    margin: 0 0.25rem !important;
+  }
+`;
+
+const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { publicKey, connected, disconnect } = useWallet();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Inject custom styles
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = walletButtonStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
   }, []);
 
   const connectWallet = () => {
@@ -38,16 +154,28 @@ const Navbar  = () => {
               <span className="text-xl font-bold text-white tracking-tight">ZapSwap</span>
             </div>
             
-            
-            
             {/* Connect Wallet & Mobile Menu */}
             <div className="flex items-center space-x-4">
-              <button 
-                onClick={connectWallet}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 hover:shadow-lg shadow-amber-500/25"
-              >
-                Connect Wallet
-              </button>
+              {connected ? (
+                <div className="flex items-center space-x-3">
+                  <div className="bg-gray-900/60 backdrop-blur-sm border border-orange-500/20 rounded-lg px-4 py-2">
+                    <span className="text-xs text-gray-400 block">Connected</span>
+                    <span className="font-mono text-sm text-orange-400">
+                      {publicKey?.toString().slice(0,4)}......{publicKey?.toString().slice(-4)}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={disconnect}
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-105 hover:shadow-lg shadow-red-500/25"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <div className="wallet-button-container">
+                  <WalletMultiButton />
+                </div>
+              )}
               
               {/* Mobile Menu Button */}
               <button 
@@ -79,7 +207,7 @@ const Navbar  = () => {
             ? 'max-h-80 opacity-100' 
             : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
-          
+          {/* Mobile menu content can be added here */}
         </div>
       </nav>
       

@@ -1,8 +1,9 @@
-"use client"
+'use client'
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Zap, Shield, Users, ArrowRight, BarChart3 } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
-const Home = () => {
+const ZapSwapLanding = () => {
   const [stats, setStats] = useState({
     volume: '1.2B',
     trades: '2.5M',
@@ -34,8 +35,7 @@ const Home = () => {
   ];
 
   const handleGetStarted = () => {
-    // Navigate to trading interface
-    console.log('Get Started clicked');
+    redirect('/Swap')
   };
 
   return (
@@ -43,142 +43,79 @@ const Home = () => {
       
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 min-h-screen flex items-center relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-amber-500 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-600 rounded-full blur-3xl"></div>
+        {/* Enhanced Background Elements */}
+        <div className="absolute inset-0">
+          {/* Main gradient orbs */}
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-orange-500/20 to-amber-400/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-gradient-to-l from-orange-600/15 to-red-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-amber-400/10 rounded-full blur-2xl"></div>
+          
+          {/* Grid pattern overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+          
+          {/* Animated particles */}
+          <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-orange-400 rounded-full animate-ping"></div>
+          <div className="absolute top-2/3 left-1/4 w-1 h-1 bg-amber-400 rounded-full animate-ping animation-delay-1000"></div>
+          <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-orange-300 rounded-full animate-ping animation-delay-2000"></div>
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="text-center">
             
-            {/* Left Content */}
-            <div className="space-y-8">
+            {/* Main Content */}
+            <div className="space-y-8 max-w-5xl mx-auto">
               <div className="space-y-6">
-                <div className="inline-flex items-center space-x-2 bg-gray-900/50 border border-gray-800 rounded-full px-4 py-2 text-sm backdrop-blur-sm">
+                <div className="inline-flex items-center space-x-2 bg-gray-900/60 border border-orange-500/20 rounded-full px-6 py-3 text-sm backdrop-blur-sm">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-gray-300">Live on Solana Mainnet</span>
+                  <div className="w-1 h-1 bg-orange-400 rounded-full"></div>
+                  <span className="text-orange-400 font-medium">Ultra Fast</span>
                 </div>
                 
-                <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+                <h1 className="text-6xl lg:text-8xl font-bold leading-tight">
                   Trade at the
-                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent block">
+                  <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent block">
                     Speed of Light
                   </span>
                 </h1>
                 
-                <p className="text-xl text-gray-400 leading-relaxed max-w-2xl">
+                <p className="text-2xl text-gray-300 leading-relaxed max-w-4xl mx-auto">
                   Experience the fastest, most efficient decentralized exchange on Solana. 
-                  Swap tokens instantly with minimal fees and maximum security.
+                  Trade tokens instantly with minimal fees and maximum security.
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <button 
                   onClick={handleGetStarted}
-                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-amber-500/25 flex items-center justify-center group"
+                  className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-orange-500/25 flex items-center justify-center group"
                 >
                   Get Started
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
                 </button>
                 
-                <button className="border border-gray-700 hover:border-gray-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:bg-gray-900/50 backdrop-blur-sm">
+                <button className="border-2 border-orange-500/30 hover:border-orange-500/60 text-white px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 hover:bg-orange-500/10 backdrop-blur-sm">
                   View Analytics
                 </button>
               </div>
               
-              {/* Stats Row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
-                <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-amber-400">${stats.volume}</div>
-                  <div className="text-gray-400 text-sm">Total Volume</div>
+              {/* Enhanced Stats Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-16">
+                <div className="text-center bg-gray-900/30 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-6 hover:border-orange-500/30 transition-all duration-300">
+                  <div className="text-4xl font-bold text-orange-400 mb-2">${stats.volume}</div>
+                  <div className="text-gray-400 font-medium">Total Volume</div>
                 </div>
-                <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-orange-400">{stats.trades}</div>
-                  <div className="text-gray-400 text-sm">Total Trades</div>
+                <div className="text-center bg-gray-900/30 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-6 hover:border-orange-500/30 transition-all duration-300">
+                  <div className="text-4xl font-bold text-amber-400 mb-2">{stats.trades}</div>
+                  <div className="text-gray-400 font-medium">Total Trades</div>
                 </div>
-                <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-amber-400">{stats.users}</div>
-                  <div className="text-gray-400 text-sm">Active Users</div>
+                <div className="text-center bg-gray-900/30 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-6 hover:border-orange-500/30 transition-all duration-300">
+                  <div className="text-4xl font-bold text-orange-400 mb-2">{stats.users}</div>
+                  <div className="text-gray-400 font-medium">Active Users</div>
                 </div>
-                <div className="text-center lg:text-left">
-                  <div className="text-3xl font-bold text-orange-400">{stats.pairs}</div>
-                  <div className="text-gray-400 text-sm">Trading Pairs</div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Right Content - Trading Interface Preview */}
-            <div className="relative">
-              <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8 shadow-2xl">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold">Quick Swap</h3>
-                    <div className="flex items-center space-x-2 text-sm text-gray-400">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>Best Price</span>
-                    </div>
-                  </div>
-                  
-                  {/* From Token */}
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-400 text-sm">From</span>
-                      <span className="text-gray-400 text-sm">Balance: 12.45</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <input 
-                        type="text" 
-                        placeholder="0.0" 
-                        className="bg-transparent text-2xl font-semibold outline-none flex-1"
-                        defaultValue="1.0"
-                      />
-                      <div className="flex items-center space-x-2 bg-gray-700 rounded-lg px-3 py-2">
-                        <div className="w-6 h-6 bg-purple-500 rounded-full"></div>
-                        <span className="font-medium">SOL</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Swap Arrow */}
-                  <div className="flex justify-center">
-                    <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-700 transition-colors cursor-pointer">
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                      </svg>
-                    </div>
-                  </div>
-                  
-                  {/* To Token */}
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-400 text-sm">To</span>
-                      <span className="text-gray-400 text-sm">Balance: 0.00</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <input 
-                        type="text" 
-                        placeholder="0.0" 
-                        className="bg-transparent text-2xl font-semibold outline-none flex-1"
-                        defaultValue="156.7"
-                        readOnly
-                      />
-                      <div className="flex items-center space-x-2 bg-gray-700 rounded-lg px-3 py-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full"></div>
-                        <span className="font-medium">USDC</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Swap Button */}
-                  <button className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02]">
-                    Swap Tokens
-                  </button>
-                  
-                  {/* Price Info */}
-                  <div className="text-center text-sm text-gray-400">
-                    1 SOL = 156.7 USDC (~$156.70)
-                  </div>
+                <div className="text-center bg-gray-900/30 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-6 hover:border-orange-500/30 transition-all duration-300">
+                  <div className="text-4xl font-bold text-amber-400 mb-2">{stats.pairs}</div>
+                  <div className="text-gray-400 font-medium">Trading Pairs</div>
                 </div>
               </div>
             </div>
@@ -187,13 +124,20 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-gray-950/50">
-        <div className="max-w-7xl mx-auto">
+      <section id="features" className="py-20 px-4 relative overflow-hidden">
+        {/* Background for features section */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black via-gray-950/90 to-black"></div>
+          <div className="absolute top-1/2 left-1/4 w-72 h-72 bg-orange-600/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-red-500/5 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-              Why Choose <span className="text-amber-400">ZapSwap</span>?
+              Why Choose <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">ZapSwap</span>?
             </h2>
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               Built for traders who demand speed, security, and the best possible prices. 
               Experience DeFi trading without compromise.
             </p>
@@ -203,12 +147,12 @@ const Home = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8 hover:border-amber-500/30 transition-all duration-300 group hover:transform hover:-translate-y-2"
+                className="bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-sm border border-gray-800/50 rounded-2xl p-8 hover:border-orange-500/40 hover:shadow-lg hover:shadow-orange-500/10 transition-all duration-300 group hover:transform hover:-translate-y-2"
               >
-                <div className="text-amber-400 mb-4 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-orange-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-3 group-hover:text-amber-400 transition-colors">
+                <h3 className="text-xl font-semibold mb-3 group-hover:text-orange-400 transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-gray-400 leading-relaxed">
@@ -221,25 +165,27 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-12 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-amber-500 to-orange-600"></div>
-            </div>
-            
-            <div className="relative z-10">
-              <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+      <section className="py-20 px-4 relative overflow-hidden">
+        {/* Enhanced background for CTA */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-900/5 via-black to-red-900/5"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl border border-orange-500/20 rounded-3xl p-12 shadow-2xl shadow-orange-500/10">
+            <div className="space-y-8">
+              <h2 className="text-4xl lg:text-5xl font-bold">
                 Ready to Start Trading?
               </h2>
-              <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
                 Join thousands of traders already using ZapSwap for lightning-fast, 
                 secure token swaps on Solana.
               </p>
               
               <button 
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-amber-500/25 inline-flex items-center group"
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-16 py-6 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-orange-500/25 inline-flex items-center group"
               >
                 Launch App
                 <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
@@ -273,4 +219,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default ZapSwapLanding;
