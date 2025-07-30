@@ -1,9 +1,10 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Zap, Shield, Users, ArrowRight, BarChart3 } from 'lucide-react';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 const ZapSwapLanding = () => {
+  const router = useRouter();
   const [stats, setStats] = useState({
     volume: '1.2B',
     trades: '2.5M',
@@ -35,8 +36,23 @@ const ZapSwapLanding = () => {
   ];
 
   const handleGetStarted = () => {
-    redirect('/Swap')
+    router.push('/Swap');
   };
+
+  // Animate stats on mount
+  useEffect(() => {
+    const animateStats = () => {
+      setStats({
+        volume: '1.2B',
+        trades: '2.5M',
+        users: '180K',
+        pairs: '850'
+      });
+    };
+
+    const timer = setTimeout(animateStats, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="bg-black text-white min-h-screen">
@@ -55,8 +71,8 @@ const ZapSwapLanding = () => {
           
           {/* Animated particles */}
           <div className="absolute top-1/4 left-1/2 w-2 h-2 bg-orange-400 rounded-full animate-ping"></div>
-          <div className="absolute top-2/3 left-1/4 w-1 h-1 bg-amber-400 rounded-full animate-ping animation-delay-1000"></div>
-          <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-orange-300 rounded-full animate-ping animation-delay-2000"></div>
+          <div className="absolute top-2/3 left-1/4 w-1 h-1 bg-amber-400 rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-orange-300 rounded-full animate-ping" style={{animationDelay: '2s'}}></div>
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -94,8 +110,11 @@ const ZapSwapLanding = () => {
                   <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
                 </button>
                 
-                <button className="border-2 border-orange-500/30 hover:border-orange-500/60 text-white px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 hover:bg-orange-500/10 backdrop-blur-sm">
-                  View Analytics
+                <button 
+                  onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="border border-orange-500/30 hover:border-orange-500/60 text-orange-400 hover:text-orange-300 px-12 py-5 rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm bg-gray-900/20 hover:bg-gray-900/40"
+                >
+                  Learn More
                 </button>
               </div>
               

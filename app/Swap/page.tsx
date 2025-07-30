@@ -1,14 +1,175 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowUpDown, Settings, TrendingUp, Clock, Zap, Info, ChevronDown, Repeat } from 'lucide-react';
+import { PublicKey, Transaction , VersionedTransaction } from '@solana/web3.js';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+
+// Types for token data
+interface TokenInfo {
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  logoURI?: string;
+  tags?: string[];
+}
+
+interface QuoteResponse {
+  inputMint: string;
+  inAmount: string;
+  outputMint: string;
+  outAmount: string;
+  otherAmountThreshold: string;
+  swapMode: string;
+  slippageBps: number;
+  platformFee: null;
+  priceImpactPct: string;
+  routePlan: any[];
+}
 
 const SwapPage = () => {
+  const { publicKey, sendTransaction, connect, connected } = useWallet();
+  const { connection } = useConnection();
+  
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
-  const [fromToken, setFromToken] = useState({ symbol: 'SOL', name: 'Solana', logo: '🟣' });
-  const [toToken, setToToken] = useState({ symbol: 'USDC', name: 'USD Coin', logo: '🔵' });
+  const [fromToken, setFromToken] = useState<TokenInfo>({ 
+    address: 'So11111111111111111111111111111111111111112', 
+    symbol: 'SOL', 
+    name: 'Solana', 
+    decimals: 9 
+  });
+  const [toToken, setToToken] = useState<TokenInfo>({ 
+    address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', 
+    symbol: 'USDC', 
+    name: 'USD Coin', 
+    decimals: 6 
+  });
   const [slippage, setSlippage] = useState('0.5');
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
+  const [quote, setQuote] = useState<QuoteResponse | null>(null);
+
+  // Fetch token list from Jupiter
+  useEffect(() => {
+    const fetchTokenList = async () => {
+      try {
+        const response = await fetch("https://token.jup.ag/strict");
+        const tokens: TokenInfo[] = await response.json();
+        setTokenList(tokens);
+        
+        // default tokens if they exist in the list
+        const solToken = tokens.find(t => t.symbol === 'SOL');
+        const usdcToken = tokens.find(t => t.symbol === 'USDC');
+        
+        if (solToken) setFromToken(solToken);
+        if (usdcToken) setToToken(usdcToken);
+      } catch (error) {
+        console.error('Error fetching token list:', error);
+      }
+    };
+
+    fetchTokenList();
+  }, []);
+
+  // Get quote when amount or tokens change
+  useEffect(() => {
+    if (fromAmount && parseFloat(fromAmount) > 0 && fromToken && toToken) {
+      getQuote();
+    } else {
+      setToAmount('');
+      setQuote(null);
+    }
+  }, [fromAmount, fromToken, toToken, slippage]);
+
+  const getQuote = async () => {
+    if (!fromAmount || !fromToken || !toToken) return;
+
+    try {
+      const amount = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromToken.decimals));
+      const slippageBps = Math.floor(parseFloat(slippage) * 100);
+
+      const response = await fetch(
+        `https://quote-api.jup.ag/v6/quote?inputMint=${fromToken.address}&outputMint=${toToken.address}&amount=${amount}&slippageBps=${slippageBps}`
+      );
+      
+      if (response.ok) {
+        const quoteData: QuoteResponse = await response.json();
+        setQuote(quoteData);
+        
+        const outAmount = parseFloat(quoteData.outAmount) / Math.pow(10, toToken.decimals);
+        setToAmount(outAmount.toFixed(6));
+      }
+    } catch (error) {
+      console.error('Error getting quote:', error);
+    }
+  };
+
+  const executeSwap = async () => {
+    if (!connected || !publicKey || !quote) {
+      if (!connected) {
+        await connect();
+        return;
+      }
+      alert("Please get a quote first");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Get swap transaction
+      const response = await fetch('https://quote-api.jup.ag/v6/swap', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteResponse: quote,
+          userPublicKey: publicKey.toString(),
+          wrapAndUnwrapSol: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get swap transaction');
+      }
+
+      const { swapTransaction } = await response.json();
+      
+      // Deserialize the transaction
+      const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
+      const transaction =  VersionedTransaction.deserialize(swapTransactionBuf);
+      
+      // Send transaction
+      const signature = await sendTransaction(transaction, connection);
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
+      
+      alert(`✅ Swap successful!\n\nTX: ${signature}`);
+      
+      // Reset form
+      setFromAmount('');
+      setToAmount('');
+      setQuote(null);
+      
+    } catch (error) {
+      console.error('Swap error:', error);
+      alert("❌ Swap failed. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const swapTokens = () => {
+    const tempToken = fromToken;
+    setFromToken(toToken);
+    setToToken(tempToken);
+    setFromAmount(toAmount);
+    setToAmount(fromAmount);
+  };
 
   const popularTokens = [
     { symbol: 'SOL', name: 'Solana', price: '$156.70', change: '+2.4%', logo: '🟣' },
@@ -25,12 +186,9 @@ const SwapPage = () => {
     { from: 'BONK', to: 'SOL', amount: '1M', value: '$34.00', time: '8m ago' }
   ];
 
-  const swapTokens = () => {
-    const temp = fromToken;
-    setFromToken(toToken);
-    setToToken(temp);
-    setFromAmount(toAmount);
-    setToAmount(fromAmount);
+  const formatPrice = (price: number) => {
+    if (price < 0.01) return price.toExponential(2);
+    return price.toFixed(2);
   };
 
   return (
@@ -83,8 +241,11 @@ const SwapPage = () => {
                         </button>
                       ))}
                       <input
-                        type="text"
+                        type="number"
+                        step="0.1"
                         placeholder="Custom"
+                        value={slippage}
+                        onChange={(e) => setSlippage(e.target.value)}
                         className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-orange-500 focus:outline-none w-20"
                       />
                     </div>
@@ -101,7 +262,7 @@ const SwapPage = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 font-medium">From</span>
                   <div className="flex items-center space-x-2 text-sm text-gray-400">
-                    <span>Balance: 12.45 SOL</span>
+                    <span>Balance: -- {fromToken.symbol}</span>
                     <button className="text-orange-400 hover:text-orange-300 font-medium">MAX</button>
                   </div>
                 </div>
@@ -109,7 +270,7 @@ const SwapPage = () => {
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 hover:border-orange-500/30 transition-all duration-200">
                   <div className="flex items-center justify-between">
                     <input
-                      type="text"
+                      type="number"
                       value={fromAmount}
                       onChange={(e) => setFromAmount(e.target.value)}
                       placeholder="0.0"
@@ -121,13 +282,10 @@ const SwapPage = () => {
                         <div className="text-sm text-gray-400">{fromToken.name}</div>
                       </div>
                       <button className="flex items-center space-x-2 bg-gray-700/50 hover:bg-gray-600/50 rounded-lg px-3 py-2 transition-all duration-200">
-                        <span className="text-2xl">{fromToken.logo}</span>
+                        <span className="text-2xl">🟣</span>
                         <ChevronDown className="w-4 h-4 text-gray-400" />
                       </button>
                     </div>
-                  </div>
-                  <div className="mt-2 text-right text-sm text-gray-400">
-                    ~$1,568.25
                   </div>
                 </div>
               </div>
@@ -147,7 +305,7 @@ const SwapPage = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 font-medium">To</span>
                   <div className="text-sm text-gray-400">
-                    Balance: 0.00 USDC
+                    Balance: -- {toToken.symbol}
                   </div>
                 </div>
                 
@@ -156,7 +314,6 @@ const SwapPage = () => {
                     <input
                       type="text"
                       value={toAmount}
-                      onChange={(e) => setToAmount(e.target.value)}
                       placeholder="0.0"
                       className="bg-transparent text-3xl font-bold text-white placeholder-gray-500 outline-none flex-1"
                       readOnly
@@ -167,53 +324,74 @@ const SwapPage = () => {
                         <div className="text-sm text-gray-400">{toToken.name}</div>
                       </div>
                       <button className="flex items-center space-x-2 bg-gray-700/50 hover:bg-gray-600/50 rounded-lg px-3 py-2 transition-all duration-200">
-                        <span className="text-2xl">{toToken.logo}</span>
+                        <span className="text-2xl">🔵</span>
                         <ChevronDown className="w-4 h-4 text-gray-400" />
                       </button>
                     </div>
-                  </div>
-                  <div className="mt-2 text-right text-sm text-gray-400">
-                    ~$1,567.00
                   </div>
                 </div>
               </div>
 
               {/* Swap Details */}
-              <div className="mt-6 space-y-3 bg-gray-800/30 rounded-xl p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Rate
-                  </span>
-                  <span className="text-white font-medium">1 SOL = 156.7 USDC</span>
+              {quote && (
+                <div className="mt-6 space-y-3 bg-gray-800/30 rounded-xl p-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center">
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Rate
+                    </span>
+                    <span className="text-white font-medium">
+                      1 {fromToken.symbol} = {formatPrice(parseFloat(toAmount) / parseFloat(fromAmount))} {toToken.symbol}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center">
+                      <Zap className="w-4 h-4 mr-2" />
+                      Network Fee
+                    </span>
+                    <span className="text-white">~0.00025 SOL ($0.04)</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center">
+                      <Clock className="w-4 h-4 mr-2" />
+                      Estimated Time
+                    </span>
+                    <span className="text-white">~15 seconds</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center">
+                      <Info className="w-4 h-4 mr-2" />
+                      Price Impact
+                    </span>
+                    <span className={`${parseFloat(quote.priceImpactPct) > 1 ? 'text-red-400' : 'text-green-400'}`}>
+                      {parseFloat(quote.priceImpactPct).toFixed(2)}%
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center">
-                    <Zap className="w-4 h-4 mr-2" />
-                    Network Fee
-                  </span>
-                  <span className="text-white">~0.00025 SOL ($0.04)</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
-                    Estimated Time
-                  </span>
-                  <span className="text-white">~15 seconds</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center">
-                    <Info className="w-4 h-4 mr-2" />
-                    Price Impact
-                  </span>
-                  <span className="text-green-400">{'<'}0.01%</span>
-                </div>
-              </div>
+              )}
 
               {/* Swap Button */}
-              <button className="w-full mt-6 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl shadow-orange-500/25 flex items-center justify-center group">
-                <Zap className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-                Swap Tokens
+              <button 
+                onClick={executeSwap}
+                disabled={loading || !fromAmount || !toAmount || !connected}
+                className="w-full mt-6 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl shadow-orange-500/25 flex items-center justify-center group"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Swapping...
+                  </>
+                ) : !connected ? (
+                  <>
+                    <Zap className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                    Connect Wallet
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5 mr-2 group-hover:animate-pulse" />
+                    Swap Tokens
+                  </>
+                )}
               </button>
             </div>
           </div>

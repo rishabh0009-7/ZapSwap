@@ -1,8 +1,9 @@
 'use client'
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { PublicKey } from '@solana/web3.js';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Home, BarChart3 } from 'lucide-react';
 
 // Custom styles for WalletMultiButton to match the page theme
 const walletButtonStyles = `
@@ -108,6 +109,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { publicKey, connected, disconnect } = useWallet();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -125,13 +127,27 @@ const Navbar = () => {
     document.head.appendChild(styleElement);
     
     return () => {
-      document.head.removeChild(styleElement);
+      if (document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
     };
   }, []);
 
-  const connectWallet = () => {
-    // This would integrate with Solana Wallet Adapter
-    console.log('Connect wallet clicked');
+  const handleNavigation = (path: string) => {
+    router.push(path);
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnect();
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+    }
+  };
+
+  const formatPublicKey = (pubkey: string) => {
+    return `${pubkey.slice(0, 4)}...${pubkey.slice(-4)}`;
   };
 
   return (
@@ -145,7 +161,10 @@ const Navbar = () => {
           <div className="flex justify-between items-center h-16">
             
             {/* Logo */}
-            <div className="flex items-center space-x-3 cursor-pointer">
+            <div 
+              className="flex items-center space-x-3 cursor-pointer"
+              onClick={() => handleNavigation('/')}
+            >
               <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg flex items-center justify-center shadow-lg">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                   <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -153,19 +172,37 @@ const Navbar = () => {
               </div>
               <span className="text-xl font-bold text-white tracking-tight">ZapSwap</span>
             </div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              <button
+                onClick={() => handleNavigation('/')}
+                className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors duration-200"
+              >
+                <Home className="w-4 h-4" />
+                <span className="font-medium">Home</span>
+              </button>
+              <button
+                onClick={() => handleNavigation('/swap')}
+                className="flex items-center space-x-2 text-gray-300 hover:text-orange-400 transition-colors duration-200"
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span className="font-medium">Swap</span>
+              </button>
+            </div>
             
-            {/* Connect Wallet & Mobile Menu */}
+            {/* Wallet Connection & Mobile Menu */}
             <div className="flex items-center space-x-4">
-              {connected ? (
+              {connected && publicKey ? (
                 <div className="flex items-center space-x-3">
                   <div className="bg-gray-900/60 backdrop-blur-sm border border-orange-500/20 rounded-lg px-4 py-2">
                     <span className="text-xs text-gray-400 block">Connected</span>
                     <span className="font-mono text-sm text-orange-400">
-                      {publicKey?.toString().slice(0,4)}......{publicKey?.toString().slice(-4)}
+                      {formatPublicKey(publicKey.toString())}
                     </span>
                   </div>
                   <button 
-                    onClick={disconnect}
+                    onClick={handleDisconnect}
                     className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 transform hover:scale-105 hover:shadow-lg shadow-red-500/25"
                   >
                     Disconnect
@@ -207,7 +244,23 @@ const Navbar = () => {
             ? 'max-h-80 opacity-100' 
             : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
-          {/* Mobile menu content can be added here */}
+          <div className="px-4 pt-2 pb-4 space-y-2 bg-black/95 backdrop-blur-md border-b border-white/10">
+            <button
+              onClick={() => handleNavigation('/')}
+              className="w-full flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-orange-400 hover:bg-gray-800/50 rounded-lg transition-all duration-200"
+            >
+              <Home className="w-5 h-5" />
+              <span className="font-medium">Home</span>
+            </button>
+            <button
+              onClick={() => handleNavigation('/Swap')}
+              className="w-full flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-orange-400 hover:bg-gray-800/50 rounded-lg transition-all duration-200"
+            >
+              <BarChart3 className="w-5 h-5" />
+              <span className="font-medium">Swap</span>
+            </button>
+            
+          </div>
         </div>
       </nav>
       
