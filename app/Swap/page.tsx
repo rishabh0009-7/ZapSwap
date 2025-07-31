@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { ArrowUpDown, Settings, TrendingUp, Clock, Zap, Info, ChevronDown, Repeat } from 'lucide-react';
-import { PublicKey, Transaction , VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 
 // Types for token data
@@ -129,24 +129,61 @@ const SwapPage = () => {
           quoteResponse: quote,
           userPublicKey: publicKey.toString(),
           wrapAndUnwrapSol: true,
+          dynamicComputeUnitLimit: true, // Add this for better compute unit handling
+          prioritizationFeeLamports: 1000, // Add small priority fees
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get swap transaction');
+        const errorText = await response.text();
+        console.error('Swap API Error:', errorText);
+        throw new Error(`Failed to get swap transaction: ${response.status} ${response.statusText}`);
       }
 
-      const { swapTransaction } = await response.json();
+      const swapData = await response.json();
+      console.log('Swap response:', swapData);
       
+      if (!swapData.swapTransaction) {
+        throw new Error('No swap transaction returned from API');
+      }
+
       // Deserialize the transaction
-      const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
-      const transaction =  VersionedTransaction.deserialize(swapTransactionBuf);
+      const swapTransactionBuf = Buffer.from(swapData.swapTransaction, 'base64');
+      let transaction: VersionedTransaction;
       
-      // Send transaction
-      const signature = await sendTransaction(transaction, connection);
+      try {
+        transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+      } catch (deserializeError) {
+        console.error('Transaction deserialization error:', deserializeError);
+        throw new Error('Failed to deserialize transaction');
+      }
+
+      console.log('Transaction to send:', transaction);
+
+      // Get latest blockhash and set it
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
       
-      // Wait for confirmation
-      await connection.confirmTransaction(signature, 'confirmed');
+      // Send transaction with additional options
+      const signature = await sendTransaction(transaction, connection, {
+        maxRetries: 3,
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      
+      console.log('Transaction sent with signature:', signature);
+      
+      // Wait for confirmation with timeout
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, 'confirmed');
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Transaction confirmation timeout')), 60000)
+      );
+
+      await Promise.race([confirmationPromise, timeoutPromise]);
       
       alert(`✅ Swap successful!\n\nTX: ${signature}`);
       
@@ -155,9 +192,28 @@ const SwapPage = () => {
       setToAmount('');
       setQuote(null);
       
-    } catch (error) {
-      console.error('Swap error:', error);
-      alert("❌ Swap failed. Check console for details.");
+    } catch (error: any) {
+      console.error('Detailed swap error:', error);
+      
+      // More detailed error handling
+      let errorMessage = "❌ Swap failed: ";
+      
+      if (error.message?.includes('insufficient funds')) {
+        errorMessage += "Insufficient funds for this transaction.";
+      } else if (error.message?.includes('slippage')) {
+        errorMessage += "Slippage tolerance exceeded. Try increasing slippage.";
+      } else if (error.message?.includes('timeout')) {
+        errorMessage += "Transaction confirmation timeout. Please check your wallet.";
+      } else if (error.message?.includes('User rejected')) {
+        errorMessage += "Transaction was rejected by user.";
+      } else if (error.logs) {
+        console.error('Transaction logs:', error.logs);
+        errorMessage += "Transaction failed. Check console for details.";
+      } else {
+        errorMessage += error.message || "Unknown error occurred.";
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
